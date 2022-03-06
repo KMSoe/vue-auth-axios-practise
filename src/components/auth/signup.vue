@@ -2,25 +2,60 @@
   <div id="signup">
     <div class="signup-form">
       <form @submit.prevent="onSubmit">
-        <div class="input">
+        <div class="input" :class="{ invalid: v$.email.$error }">
           <label for="email">Mail</label>
-          <input type="email" name="email" id="email" v-model="email" />
+          <input
+            type="email"
+            name="email"
+            id="email"
+            v-model="v$.email.$model"
+          />
+          <template v-if="v$.email.$dirty">
+            <span class="error" v-if="v$.email.required.$invalid"
+              >email is required</span
+            >
+            <span class="error" v-if="v$.email.email.$invalid"
+              >Invalid email</span
+            >
+          </template>
         </div>
-        <div class="input">
+        <div class="input" :class="{ invalid: v$.age.$error }">
           <label for="age">Your Age</label>
-          <input type="number" id="age" v-model.number="age" />
+          <input type="number" id="age" v-model.number="v$.age.$model" />
+          <template v-if="v$.age.$dirty">
+            <span class="error" v-if="v$.age.required.$invalid"
+              >Age is required</span
+            >
+            <span class="error" v-if="v$.age.minValue.$invalid"
+              >Age must be at least {{ v$.age.minValue.$params.min }}</span
+            >
+          </template>
         </div>
-        <div class="input">
+        <div class="input" :class="{ invalid: v$.password.$error }">
           <label for="password">Password</label>
-          <input type="password" id="password" v-model="password" />
+          <input type="password" id="password" v-model="v$.password.$model" />
+          <template v-if="v$.password.$dirty">
+            <span class="error" v-if="v$.password.required.$invalid"
+              >password is required</span
+            >
+            <span class="error" v-if="v$.password.minLength.$invalid"
+              >password must be at least
+              {{ v$.password.minLength.$params.min }} characters</span
+            >
+          </template>
         </div>
-        <div class="input">
+        <div class="input" :class="{ invalid: v$.confirmPassword.$error }">
           <label for="confirm-password">Confirm Password</label>
           <input
             type="password"
             id="confirm-password"
-            v-model="confirmPassword"
+            v-model="v$.confirmPassword.$model"
           />
+          <template v-if="v$.confirmPassword.$dirty">
+            <span class="error" v-if="v$.confirmPassword.sameAs.$invalid"
+              >Passwords don't match!!!</span
+            >
+          </template>
         </div>
         <div class="input">
           <label for="country">Country</label>
@@ -57,13 +92,8 @@
           <label for="terms">Accept Terms of Use</label>
         </div>
         <div class="submit">
-          <button type="submit">Submit</button>
+          <button type="submit" :disabled="v$.$invalid">Submit</button>
         </div>
-      </form>
-      <form>
-        <input type="email" name="email" v-model="v$.email.$model" />
-        <span v-if="v$.email.$dirty && v$.email.required.$invalid">email is required</span>
-        <span v-if="v$.email.$dirty && v$.email.email.$invalid">Invalid email</span>
       </form>
     </div>
   </div>
@@ -71,7 +101,14 @@
 
 <script>
 import useVuelidate from "@vuelidate/core";
-import { required, email } from "@vuelidate/validators";
+import {
+  required,
+  email,
+  numeric,
+  minValue,
+  minLength,
+  sameAs,
+} from "@vuelidate/validators";
 
 export default {
   setup() {
@@ -82,6 +119,9 @@ export default {
   validations() {
     return {
       email: { required, email },
+      age: { required, numeric, minValue: minValue(18) },
+      password: { required, minLength: minLength(6) },
+      confirmPassword: { sameAs: sameAs(this.password) },
     };
   },
   data() {
@@ -131,7 +171,9 @@ export default {
   padding: 20px;
   box-shadow: 0 2px 3px #ccc;
 }
-
+.error {
+  color: red;
+}
 .input {
   margin: 10px auto;
 }
